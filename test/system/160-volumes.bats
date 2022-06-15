@@ -64,6 +64,28 @@ function teardown() {
 }
 
 
+# Filter volumes by name
+@test "podman volume filter --name" {
+    suffix=$(random_string)
+    prefix="volume"
+
+    for i in 1 2; do
+        myvolume=${prefix}_${i}_${suffix}
+        run_podman volume create $myvolume
+        is "$output" "$myvolume" "output from volume create $i"
+    done
+
+    run_podman volume ls --filter name=${prefix}_1.+ --format "{{.Name}}"
+    is "$output" "${prefix}_1_${suffix}" "--filter name=${prefix}_1.+ shows only one volume"
+
+    run_podman volume ls --filter name=${prefix}* --format "{{.Name}}"
+    is "$output" "${prefix}_1_${suffix}.*${prefix}_2_${suffix}$" "--filter name=${prefix}* shows ${prefix}_1 and ${prefix}_2"
+
+    for i in 1 2; do
+        run_podman volume rm ${prefix}_${i}
+    done
+}
+
 # Named volumes
 @test "podman volume create / run" {
     myvolume=myvol$(random_string)
